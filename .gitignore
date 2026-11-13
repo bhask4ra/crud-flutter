@@ -1,0 +1,20 @@
+# --- .NET ---
+api/bin/
+api/obj/
+api.Tests/bin/
+api.Tests/obj/
+*.db
+*.db-shm
+*.db-wal
+logs/
+publish/
+
+# --- Flutter ---
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+
+# --- OS / editor ---
+.DS_Store
+*.user
