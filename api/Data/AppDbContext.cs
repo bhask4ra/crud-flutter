@@ -7,34 +7,47 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<Medico> Medicos => Set<Medico>();
+    public DbSet<Producto> CatProductos => Set<Producto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Medico>(e =>
+        modelBuilder.Entity<Producto>(e =>
         {
-            e.HasKey(m => m.IdMedico);
-            e.Property(m => m.Nombre).IsRequired().HasMaxLength(100);
-            e.Property(m => m.ApPaterno).IsRequired().HasMaxLength(100);
-            e.Property(m => m.ApMaterno).HasMaxLength(100);
-            e.Property(m => m.Telefono).HasMaxLength(20);
-            e.Property(m => m.Direccion).HasMaxLength(200);
-            e.Property(m => m.Especialidad).IsRequired().HasMaxLength(100);
+            e.ToTable("catProductos");
+            e.HasKey(p => p.IdProducto);
+            e.Property(p => p.Nombre).IsRequired().HasMaxLength(150);
+            e.Property(p => p.PrecioUnitario).HasPrecision(18, 2);
+            e.Property(p => p.Tipo).HasConversion<string>().HasMaxLength(20);
         });
 
         // Datos de ejemplo (seed).
-        modelBuilder.Entity<Medico>().HasData(
-            new Medico
+        modelBuilder.Entity<Producto>().HasData(
+            new Producto
             {
-                IdMedico = 1, Nombre = "Ana", ApPaterno = "García", ApMaterno = "López",
-                Telefono = "5551234567", Direccion = "Av. Reforma 123",
-                Especialidad = "Cardiología", Estatus = true
+                IdProducto = 1,
+                Nombre = "Laptop Dell Inspiron 15",
+                PrecioUnitario = 14500.00m,
+                Estatus = true,
+                Existencias = 8,
+                Tipo = TipoProducto.Articulo
             },
-            new Medico
+            new Producto
             {
-                IdMedico = 2, Nombre = "Luis", ApPaterno = "Hernández", ApMaterno = "Ruiz",
-                Telefono = "5559876543", Direccion = "Calle Juárez 45",
-                Especialidad = "Pediatría", Estatus = true
+                IdProducto = 2,
+                Nombre = "Mouse Inalámbrico Logitech",
+                PrecioUnitario = 450.00m,
+                Estatus = true,
+                Existencias = 3,
+                Tipo = TipoProducto.Articulo
+            },
+            new Producto
+            {
+                IdProducto = 3,
+                Nombre = "Mantenimiento Preventivo PC",
+                PrecioUnitario = 600.00m,
+                Estatus = true,
+                Existencias = 0,
+                Tipo = TipoProducto.Servicio
             }
         );
     }

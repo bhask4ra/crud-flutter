@@ -16,68 +16,63 @@ namespace MedicosApi.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
-            modelBuilder.Entity("MedicosApi.Models.Medico", b =>
+            modelBuilder.Entity("MedicosApi.Models.Producto", b =>
                 {
-                    b.Property<int>("IdMedico")
+                    b.Property<int>("IdProducto")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("ApMaterno")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ApPaterno")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Direccion")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Especialidad")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
 
                     b.Property<bool>("Estatus")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("Existencias")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(100)
+                        .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Telefono")
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
-                    b.HasKey("IdMedico");
+                    b.HasKey("IdProducto");
 
-                    b.ToTable("Medicos");
+                    b.ToTable("catProductos", (string)null);
 
                     b.HasData(
                         new
                         {
-                            IdMedico = 1,
-                            ApMaterno = "López",
-                            ApPaterno = "García",
-                            Direccion = "Av. Reforma 123",
-                            Especialidad = "Cardiología",
+                            IdProducto = 1,
                             Estatus = true,
-                            Nombre = "Ana",
-                            Telefono = "5551234567"
+                            Existencias = 8,
+                            Nombre = "Laptop Dell Inspiron 15",
+                            PrecioUnitario = 14500.00m,
+                            Tipo = "Articulo"
                         },
                         new
                         {
-                            IdMedico = 2,
-                            ApMaterno = "Ruiz",
-                            ApPaterno = "Hernández",
-                            Direccion = "Calle Juárez 45",
-                            Especialidad = "Pediatría",
+                            IdProducto = 2,
                             Estatus = true,
-                            Nombre = "Luis",
-                            Telefono = "5559876543"
+                            Existencias = 3,
+                            Nombre = "Mouse Inalámbrico Logitech",
+                            PrecioUnitario = 450.00m,
+                            Tipo = "Articulo"
+                        },
+                        new
+                        {
+                            IdProducto = 3,
+                            Estatus = true,
+                            Existencias = 0,
+                            Nombre = "Mantenimiento Preventivo PC",
+                            PrecioUnitario = 600.00m,
+                            Tipo = "Servicio"
                         });
                 });
 #pragma warning restore 612, 618

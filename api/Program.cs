@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using MedicosApi.Data;
 using MedicosApi.Repositories;
@@ -10,14 +11,16 @@ builder.WebHost.UseUrls("http://0.0.0.0:5000");
 // EF Core + SQLite.
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("Default")
-                  ?? "Data Source=medicos.db"));
+                  ?? "Data Source=productos.db"));
 
-builder.Services.AddScoped<IMedicoRepository, MedicoRepository>();
+builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+        opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddOpenApi();
 
-// CORS abierto para el cliente móvil.
+// CORS abierto para el cliente móvil y web.
 const string CorsPolicy = "AllowAll";
 builder.Services.AddCors(opt =>
     opt.AddPolicy(CorsPolicy, p => p.AllowAnyOrigin()
