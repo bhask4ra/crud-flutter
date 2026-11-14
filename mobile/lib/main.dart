@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 
-import 'services/medico_api_service.dart';
-import 'screens/medicos_list_screen.dart';
+import 'services/producto_api_service.dart';
+import 'screens/productos_list_screen.dart';
 
 void main() {
-  runApp(const MedicosApp());
+  runApp(const ProductosApp());
 }
 
-class MedicosApp extends StatelessWidget {
-  const MedicosApp({super.key});
+class ProductosApp extends StatelessWidget {
+  const ProductosApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final api = MedicoApiService();
+    final api = ProductoApiService();
     return MaterialApp(
-      title: 'CRUD Médicos',
+      title: 'catProductos',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorSchemeSeed: Colors.teal,
         useMaterial3: true,
       ),
-      home: MedicosListScreen(api: api),
+      home: ProductosListScreen(api: api),
     );
   }
 }
