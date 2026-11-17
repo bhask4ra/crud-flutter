@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -36,17 +37,46 @@ public class ApiFactory : WebApplicationFactory<Program>
     }
 }
 
-public class ProductosApiIntegrationTests : IClassFixture<ApiFactory>
+public class ProductosApiIntegrationTests : IClassFixture<ApiFactory>, IAsyncLifetime
 {
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter() }
     };
 
+    private readonly ApiFactory _factory;
     private readonly HttpClient _client;
 
-    public ProductosApiIntegrationTests(ApiFactory factory) =>
+    public ProductosApiIntegrationTests(ApiFactory factory)
+    {
+        _factory = factory;
         _client = factory.CreateClient();
+    }
+
+    public async Task InitializeAsync()
+    {
+        var email = $"productos-test-{Guid.NewGuid():N}@test.com";
+        var resp = await _client.PostAsJsonAsync("/api/auth/register", new RegisterDto
+        {
+            Nombre = "Test User",
+            Email = email,
+            Password = "Password123!"
+        }, JsonOpts);
+        resp.EnsureSuccessStatusCode();
+        var auth = await resp.Content.ReadFromJsonAsync<AuthResponseDto>(JsonOpts);
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", auth!.Token);
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    [Fact]
+    public async Task GetAll_SinToken_DevuelveUnauthorized()
+    {
+        using var anonClient = _factory.CreateClient();
+        var resp = await anonClient.GetAsync("/api/productos");
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
 
     [Fact]
     public async Task GetAll_DevuelveSeedInicial()

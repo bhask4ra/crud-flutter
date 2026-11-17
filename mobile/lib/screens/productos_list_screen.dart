@@ -6,7 +6,15 @@ import 'producto_form_screen.dart';
 
 class ProductosListScreen extends StatefulWidget {
   final ProductoApiService api;
-  const ProductosListScreen({super.key, required this.api});
+  final String? userName;
+  final VoidCallback? onLogout;
+
+  const ProductosListScreen({
+    super.key,
+    required this.api,
+    this.userName,
+    this.onLogout,
+  });
 
   @override
   State<ProductosListScreen> createState() => _ProductosListScreenState();
@@ -99,7 +107,27 @@ class _ProductosListScreenState extends State<ProductosListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Catálogo de Productos')),
+      appBar: AppBar(
+        title: const Text('Catálogo de Productos'),
+        actions: [
+          if (widget.userName != null && widget.userName!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Center(
+                child: Text(
+                  widget.userName!,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ),
+          if (widget.onLogout != null)
+            IconButton(
+              tooltip: 'Cerrar sesión',
+              icon: const Icon(Icons.logout),
+              onPressed: widget.onLogout,
+            ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(),
         icon: const Icon(Icons.add),

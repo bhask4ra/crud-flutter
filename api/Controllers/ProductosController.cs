@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MedicosApi.Dtos;
 using MedicosApi.Models;
@@ -5,6 +6,7 @@ using MedicosApi.Repositories;
 
 namespace MedicosApi.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ProductosController : ControllerBase

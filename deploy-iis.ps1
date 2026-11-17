@@ -17,6 +17,14 @@ if (-not (Test-Path "C:\Program Files\IIS\Asp.Net Core Module\V2\aspnetcorev2.dl
 
 Import-Module WebAdministration
 
+# Detener sitios existentes antes de copiar para evitar DLLs bloqueados
+if (Test-Path "IIS:\Sites\CatProductosApi") {
+    Stop-Website -Name "CatProductosApi" -ErrorAction SilentlyContinue
+}
+if (Test-Path "IIS:\Sites\CatProductosWeb") {
+    Stop-Website -Name "CatProductosWeb" -ErrorAction SilentlyContinue
+}
+
 # 1. Copiar archivos publicados
 New-Item -ItemType Directory -Force -Path $apiDest | Out-Null
 New-Item -ItemType Directory -Force -Path $webDest | Out-Null

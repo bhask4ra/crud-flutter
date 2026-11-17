@@ -1,128 +1,280 @@
-# CRUD de Médicos — API C# (.NET 10) + App Flutter
+# CRUD de Productos — API .NET 10 + Flutter (desplegado en IIS)
 
-CRUD completo de la entidad **Médico** con:
+CRUD de **Productos** con:
 
-- **Backend:** ASP.NET Core (.NET 10) + Entity Framework Core + **SQLite**, en el puerto **5000**.
-- **Frontend móvil:** Flutter, consumiendo la API por HTTP.
-- **Despliegue:** IIS en Windows (se incluye `web.config` + guía).
+- **Backend:** ASP.NET Core (.NET 10) + EF Core + SQLite, desplegado en **IIS** (`http://localhost:5000`).
+- **Frontend:** Flutter, corriendo en un emulador Android de Android Studio.
+- **Base de datos:** SQLite (`productos.db`), se crea sola con migraciones automáticas y datos de ejemplo al primer arranque.
+
+> Nota de naming: el `.csproj` y algunos archivos dicen `Medicos`, pero el código real (controlador, modelo, repositorio, Flutter) es de **Productos**. No afecta la ejecución.
 
 ```
-crud/
-├── api/          # API ASP.NET Core (.NET 10)
-├── api.Tests/    # Tests xUnit (unitarios + integración)
-├── mobile/       # App Flutter
-└── .docs/        # Plan y estado de sesión
+crud-flutter/
+├── api/                  # Código fuente ASP.NET Core (.NET 10)
+├── api.Tests/            # Tests xUnit (unitarios + integración)
+├── mobile/               # App Flutter
+├── publish/api/          # Binarios publicados que usa IIS
+└── deploy-iis.ps1        # Script de despliegue inicial en IIS
 ```
-
-## Entidad `Medico`
-
-| Campo        | Tipo    | Requerido |
-|--------------|---------|-----------|
-| IdMedico     | int     | PK (auto) |
-| Nombre       | string  | sí        |
-| ApPaterno    | string  | sí        |
-| ApMaterno    | string  | no        |
-| Telefono     | string  | no        |
-| Direccion    | string  | no        |
-| Especialidad | string  | sí        |
-| Estatus      | bool    | sí (def. true = activo) |
-
-## Endpoints
-
-| Método | Ruta                 | Descripción            |
-|--------|----------------------|------------------------|
-| GET    | `/api/medicos`       | Lista todos            |
-| GET    | `/api/medicos/{id}`  | Obtiene uno            |
-| POST   | `/api/medicos`       | Crea                   |
-| PUT    | `/api/medicos/{id}`  | Actualiza              |
-| DELETE | `/api/medicos/{id}`  | Elimina                |
-
-En desarrollo, Swagger queda en `http://localhost:5000/swagger`.
 
 ---
 
-## 1. Correr la API (desarrollo, Linux/Windows/Mac)
+## 1. Requisitos (una sola vez)
 
-> En esta máquina Linux el SDK se instaló en `~/.dotnet`. Agregalo al PATH:
-> ```bash
-> export PATH="$HOME/.dotnet:$PATH"
-> ```
-> En tu computadora Windows, instalá el **.NET 10 SDK** y `dotnet` queda en el PATH solo.
+En la PC donde se corre:
 
-```bash
-cd api
-dotnet restore
-dotnet run
+- **.NET 10 SDK** y **.NET 10 Hosting Bundle** (para que IIS pueda hospedar la API).
+- **IIS** con `WebAdministration` (servicio `W3SVC`).
+- **Flutter SDK** en el PATH.
+- **Android Studio** con un emulador creado.
+- **ADB** en el PATH (viene con `platform-tools` de Android SDK).
+
+Verificar:
+
+```powershell
+dotnet --list-runtimes
 ```
 
-La API levanta en `http://0.0.0.0:5000`. La base `medicos.db` se crea sola al
-arrancar (migración automática + datos de ejemplo).
-
-### Prueba de humo rápida (curl)
-
-```bash
-curl http://localhost:5000/api/medicos
-curl -X POST http://localhost:5000/api/medicos \
-  -H "Content-Type: application/json" \
-  -d '{"nombre":"Juan","apPaterno":"Pérez","especialidad":"Cirugía","estatus":true}'
+```powershell
+Get-Service W3SVC
 ```
 
-## 2. Tests de la API
+```powershell
+flutter doctor
+```
+
+```powershell
+adb devices
+```
+
+---
+
+## 2. Demo en vivo (caso normal: ya está todo desplegado)
+
+IIS arranca solo con Windows, así que la API ya está disponible sin hacer nada.
+
+**Paso 1 — abrir el emulador de Android Studio** (Device Manager → Play).
+
+**Paso 2 — verificar que la API responde en IIS:**
 
 ```bash
-cd api.Tests
+curl http://localhost:5000/api/productos
+```
+
+La primera llamada puede tardar ~15 s (EF Core crea la base y aplica migraciones en frío). Las siguientes son instantáneas.
+
+**Paso 3 — correr la app Flutter en el emulador (con hot reload):**
+
+```powershell
+cd C:\Users\damia\Documents\crud-flutter\mobile
+```
+
+```powershell
+flutter run
+```
+
+Si hay varios dispositivos (Chrome, Edge, Windows, emulador), forzá el emulador:
+
+```powershell
+flutter run -d emulator-5554
+```
+
+Dentro de `flutter run`:
+
+- `r` → hot reload
+- `R` → hot restart
+- `q` → salir
+
+**Esos son los únicos comandos necesarios para una demo sin cambios de código.**
+
+---
+
+## 3. Despliegue inicial en IIS (una sola vez)
+
+Si la PC no tiene el sitio IIS creado todavía:
+
+**3.1. Publicar la API:**
+
+```powershell
+cd C:\Users\damia\Documents\crud-flutter\api
+```
+
+```powershell
+dotnet publish -c Release -o ..\publish\api
+```
+
+**3.2. Correr el script de despliegue como Administrador** (crea Application Pool, sitio IIS en puerto 5000, copia archivos y da permisos a SQLite):
+
+```powershell
+cd C:\Users\damia\Documents\crud-flutter
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\deploy-iis.ps1
+```
+
+**3.3. Verificar que el sitio quedó arriba:**
+
+```bash
+curl http://localhost:5000/api/productos
+```
+
+---
+
+## 4. Re-desplegar la API cuando cambie código .NET
+
+```powershell
+cd C:\Users\damia\Documents\crud-flutter\api
+```
+
+```powershell
+dotnet publish -c Release -o ..\publish\api
+```
+
+```powershell
+Stop-Website -Name "CatProductosApi"
+```
+
+```powershell
+Copy-Item -Path "C:\Users\damia\Documents\crud-flutter\publish\api\*" -Destination "C:\inetpub\wwwroot\catproductos-api" -Recurse -Force
+```
+
+```powershell
+Start-Website -Name "CatProductosApi"
+```
+
+```bash
+curl http://localhost:5000/api/productos
+```
+
+> IIS puede tener los DLL bloqueados mientras el worker corre; por eso `Stop-Website` antes de copiar.
+
+---
+
+## 5. Re-compilar e instalar la app Flutter sin hot reload
+
+Alternativa a `flutter run` (útil si querés dejar el APK instalado y cerrar la terminal):
+
+```powershell
+cd C:\Users\damia\Documents\crud-flutter\mobile
+```
+
+```powershell
+flutter pub get
+```
+
+```powershell
+flutter build apk --debug
+```
+
+```powershell
+adb -s emulator-5554 install -r build\app\outputs\flutter-apk\app-debug.apk
+```
+
+```powershell
+adb -s emulator-5554 shell am start -n com.example.medicos_app/.MainActivity
+```
+
+Detenerla cuando quieras:
+
+```powershell
+adb -s emulator-5554 shell am force-stop com.example.medicos_app
+```
+
+---
+
+## 6. Comandos útiles de diagnóstico
+
+**Ver quién escucha en el puerto 5000:**
+
+```powershell
+Get-NetTCPConnection -LocalPort 5000 -State Listen
+```
+
+**Ver sitios de IIS:**
+
+```powershell
+Get-Website | Format-Table Name, State, PhysicalPath
+```
+
+**Probar la API desde la IP de LAN (útil para dispositivo físico, no el emulador):**
+
+```powershell
+(Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notlike '*Loopback*' -and $_.IPAddress -notlike '169.*' }).IPAddress
+```
+
+```bash
+curl http://<IP_de_tu_PC>:5000/api/productos
+```
+
+**Ver logs de la app Flutter en vivo:**
+
+```powershell
+adb -s emulator-5554 logcat --pid=$(adb -s emulator-5554 shell pidof com.example.medicos_app) *:I
+```
+
+**Reiniciar IIS completo:**
+
+```powershell
+iisreset
+```
+
+---
+
+## 7. ¿Cómo se conecta Flutter con la API?
+
+El servicio [producto_api_service.dart](mobile/lib/services/producto_api_service.dart) resuelve la URL base según plataforma:
+
+| Plataforma           | URL base                     |
+|----------------------|------------------------------|
+| Emulador Android     | `http://10.0.2.2:5000`       |
+| Escritorio / Web     | `http://localhost:5000`      |
+| Dispositivo físico   | pasar `--dart-define=API_BASE_URL=http://<IP_PC>:5000` |
+
+> `10.0.2.2` es el alias que el emulador de Android usa para alcanzar al `localhost` de la PC anfitriona.
+
+Para dispositivo físico:
+
+```powershell
+flutter run --dart-define=API_BASE_URL=http://192.168.1.222:5000
+```
+
+---
+
+## 8. Endpoints de la API
+
+Base: `http://localhost:5000`
+
+| Método | Ruta                                | Descripción                       |
+|--------|-------------------------------------|-----------------------------------|
+| GET    | `/api/productos`                    | Lista (filtros: `search`, `tipo`, `estatus`) |
+| GET    | `/api/productos/{id}`               | Obtiene uno                       |
+| GET    | `/api/productos/resumen`            | Totales de inventario             |
+| POST   | `/api/productos`                    | Crea                              |
+| PUT    | `/api/productos/{id}`               | Actualiza                         |
+| PATCH  | `/api/productos/{id}/existencias`   | Ajusta stock (`{"delta": N}`)     |
+| DELETE | `/api/productos/{id}`               | Elimina                           |
+
+---
+
+## 9. Tests
+
+**API:**
+
+```powershell
+cd C:\Users\damia\Documents\crud-flutter\api.Tests
+```
+
+```powershell
 dotnet test
 ```
 
-Cubre tests unitarios del controller (repositorio falso en memoria) e
-integración de los 5 endpoints contra SQLite en memoria.
+**Flutter:**
 
-## 3. Correr la app Flutter
-
-```bash
-cd mobile
-flutter pub get
-flutter run            # elegí dispositivo/emulador
-# o, para probar rápido en escritorio/web:
-flutter run -d linux
-flutter run -d chrome
+```powershell
+cd C:\Users\damia\Documents\crud-flutter\mobile
 ```
 
-`baseUrl` se resuelve solo:
-- **Emulador Android:** `http://10.0.2.2:5000` (el host se ve así desde el emulador).
-- **Desktop/web:** `http://localhost:5000`.
-
-> Si corrés en un **dispositivo físico**, cambiá `baseUrl` por la IP de tu PC
-> (ej. `http://192.168.1.50:5000`) al construir `MedicoApiService`.
-
-### Tests Flutter
-
-```bash
-cd mobile
+```powershell
 flutter test
 ```
-
----
-
-## 4. Despliegue en IIS (Windows)
-
-1. Instalá en el servidor Windows el **.NET 10 Hosting Bundle** (incluye el
-   módulo `AspNetCoreModuleV2` para IIS) y reiniciá IIS (`iisreset`).
-2. Publicá la API:
-   ```powershell
-   cd api
-   dotnet publish -c Release -o .\publish
-   ```
-   El `web.config` ya está incluido y se copia a `publish`.
-3. En **IIS Manager**: creá un sitio (o aplicación) apuntando a la carpeta
-   `publish`. En el *binding* del sitio configurá el puerto **5000** (o el que
-   uses). El `Application Pool` debe estar en modo **"No Managed Code"**
-   (porque .NET corre vía el módulo nativo, no el CLR de IIS).
-4. Dale permisos de escritura a la carpeta al usuario del Application Pool
-   (`IIS AppPool\<NombreDelPool>`) para que SQLite pueda crear/escribir
-   `medicos.db`.
-5. Probá `http://<servidor>:5000/api/medicos`.
-
-> Nota: bajo IIS el binding lo controla el sitio, así que la línea
-> `UseUrls("http://0.0.0.0:5000")` del `Program.cs` se ignora en ese entorno
-> (es la que fija el puerto al correr con `dotnet run` en desarrollo).
